@@ -2,10 +2,10 @@ import zmq
 from multiprocessing import Process
 import functools
 
-
 started_processes = list()
 
-def wrap_pyzmq(func,  pub_addr, sub_addr ):
+
+def _wrap_pyzmq(func, pub_addr, sub_addr):
     context = zmq.Context()
     sock_sub = context.socket(zmq.SUB)
     sock_sub.connect(sub_addr)
@@ -16,14 +16,16 @@ def wrap_pyzmq(func,  pub_addr, sub_addr ):
         func_res = func(**func_pars)
         sock_pub.send_pyobj(func_res)
 
+
 def pyzac_decorator(pub_addr, sub_addr):
     def decorator_pyzeromq(func):
         @functools.wraps(func)
         def wrapper_process(*args, **kwargs):
-            f=functools.partial(wrap_pyzmq, func,pub_addr,sub_addr)
-            newProcess = Process(target=f)
-            newProcess.start()
-            started_processes.append(newProcess)
+            f = functools.partial(_wrap_pyzmq, func, pub_addr, sub_addr)
+            new_process = Process(target=f)
+            new_process.start()
+            started_processes.append(new_process)
 
         return wrapper_process
+
     return decorator_pyzeromq

@@ -1,4 +1,6 @@
 # pyzac python-zero-mq-actor
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
+
 
 ## Basic Concept
  pyzac uses zeromq to create a mesho of interconnected actors.
