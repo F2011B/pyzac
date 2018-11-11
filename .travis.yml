@@ -1,11 +1,34 @@
 language: python
+
+sudo: false
+
+cache:
+    directories:
+      - $HOME/.cache/pip
+
 python:
-  - "3.4"
-  - "3.5"
-  - "3.6"
-# command to install dependencies
+  - 3.3
+  - 3.4
+  - 3.5
+  - 3.6
+  - 3.7
+
+env:
+  - DIST=
+    WITH_COVERAGE=1
+  - DIST="--installpkg ./dist/pyzac-*.whl"
+
+matrix:
+  include:
+    - python: 3.5
+      env:
+        - TOXENV=regression
+        - TIMEOUT=travis_wait 45
+        - WITH_COVERAGE=1
+
 install:
   - pip install -r requirements.txt
-# command to run tests
+  - python setup.py bdist_wheel
+
 script:
-- pytest
+  - $TIMEOUT tox -v $DIST

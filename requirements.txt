@@ -1,3 +1,5 @@
 tox
-pytest
+tox-travis
 pyzmq
+pytest
+wheel
