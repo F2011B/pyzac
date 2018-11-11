@@ -14,14 +14,6 @@ python:
 env:
   - DIST="--installpkg ./dist/pyzac-*.whl"
 
-matrix:
-  include:
-    - python: 3.5
-      env:
-        - TOXENV=regression
-        - TIMEOUT=travis_wait 45
-        - WITH_COVERAGE=1
-
 install:
   - pip install -r requirements.txt
   - pip list
