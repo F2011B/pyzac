@@ -33,22 +33,31 @@ def _wrap_pyzmq(func, pub_addr="", sub_addr=""):
     if not nosub:
         sock_sub = context.socket(zmq.SUB)
         sock_sub.connect(sub_addr)
+        sock_sub.setsockopt(zmq.SUBSCRIBE, b"")
     if not nopub:
         sock_pub = context.socket(zmq.PUB)
-        sock_pub.connect(pub_addr)
+        sock_pub.bind(pub_addr)
 
-    hasstate, state = try_get_default_state(func)
+    usestate, state = try_get_default_state(func)
     while True:
+        func_res = ""
+        func_pars = []
         if not nosub:
             func_pars = sock_sub.recv_pyobj()
 
-        if hasstate:
-            func_res = func(pyzac_state=state, **func_pars)
+        if usestate:
+            if not nosub:
+                func_res = func(func_pars, pyzac_state=state)
+            else:
+                func_res = func(pyzac_state=state)
             state = func_res
         else:
-            func_res = func(**func_pars)
-
-        sock_pub.send_pyobj(func_res)
+            if not nosub:
+                func_res = func(func_pars)
+            else:
+                func_res = func()
+                # print("send data " + str(func_res))
+                sock_pub.send_pyobj(func_res)
 
 
 def pyzac_decorator(pub_addr="", sub_addr=""):
@@ -63,3 +72,6 @@ def pyzac_decorator(pub_addr="", sub_addr=""):
         return wrapper_process
 
     return decorator_pyzeromq
+
+    publisher()
+    subscriber(20)
