@@ -72,6 +72,3 @@ def pyzac_decorator(pub_addr="", sub_addr=""):
         return wrapper_process
 
     return decorator_pyzeromq
-
-    publisher()
-    subscriber(20)
