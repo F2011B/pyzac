@@ -18,7 +18,7 @@ def test_decorators():
         print(result)
 
     publisher()
-    subscriber(20)
+    subscriber()
 
 
 if __name__ == "__main__":
