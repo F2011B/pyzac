@@ -40,7 +40,8 @@ def test_state():
         return result + pyzac_state
 
     publisher()
-    subscriber()
+    sub = subscriber
+    sub()
     sleep(1)
     for p in started_processes:
         p.terminate()
