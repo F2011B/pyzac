@@ -40,7 +40,6 @@ def _wrap_pyzmq(func, pub_addr="", sub_addr=""):
         sock_pub.bind(pub_addr)
 
     usestate, state = try_get_default_state(func)
-
     while True:
         func_res = ""
         func_pars = []
@@ -65,7 +64,6 @@ def _wrap_pyzmq(func, pub_addr="", sub_addr=""):
                 # print("send data " + str(func_res))
         if pub:
             sock_pub.send_pyobj(func_res)
-
 
 def pyzac_decorator(pub_addr="", sub_addr=""):
     def decorator_pyzeromq(func):
