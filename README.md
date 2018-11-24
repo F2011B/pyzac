@@ -18,3 +18,5 @@
     
  This decorator is used to license to another actor or in case the function 
  does not have any parameters it is used to publish the function results.
+ The package should be placed at pypi in the near future.
+ 
