@@ -23,41 +23,48 @@ def try_get_default_state(func):
 
 
 def _wrap_pyzmq(func, pub_addr="", sub_addr=""):
-    nopub = pub_addr == ""
-    nosub = sub_addr == ""
-    if nopub and nosub:
-        return
+    pub = not (pub_addr == "")
+    sub = not (sub_addr == "")
+    only_pub = pub and (not sub)
+    only_sub = sub and (not pub)
+    pub_sub = sub and pub
 
     context = zmq.Context()
 
-    if not nosub:
+    if sub:
         sock_sub = context.socket(zmq.SUB)
         sock_sub.connect(sub_addr)
         sock_sub.setsockopt(zmq.SUBSCRIBE, b"")
-    if not nopub:
+    if pub:
         sock_pub = context.socket(zmq.PUB)
         sock_pub.bind(pub_addr)
 
     usestate, state = try_get_default_state(func)
+
     while True:
         func_res = ""
         func_pars = []
-        if not nosub:
+        if sub:
             func_pars = sock_sub.recv_pyobj()
 
         if usestate:
-            if not nosub:
+            if only_sub:
                 func_res = func(func_pars, pyzac_state=state)
-            else:
+            if pub_sub:
+                func_res = func(func_pars, pyzac_state=state)
+            if only_pub:
                 func_res = func(pyzac_state=state)
             state = func_res
         else:
-            if not nosub:
+            if only_sub:
                 func_res = func(func_pars)
-            else:
+            if pub_sub:
+                func_res = func(func_pars)
+            if only_pub:
                 func_res = func()
                 # print("send data " + str(func_res))
-                sock_pub.send_pyobj(func_res)
+        if pub:
+            sock_pub.send_pyobj(func_res)
 
 
 def pyzac_decorator(pub_addr="", sub_addr=""):
