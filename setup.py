@@ -18,15 +18,6 @@ if sys.version_info < (3, 3):
     sys.exit(1)
 
 
-def long_description():
-    with open(os.path.join(BASE_PATH, "README.rst")) as readme:
-        return readme.read()
-
-
-
-
-
-
 setup(
     name="pyzac",
     version="0.0.5",
