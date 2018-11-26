@@ -29,7 +29,7 @@ with open("LICENSE") as f:
 
 setup(
     name="pyzac",
-    version="0.0.2",
+    version="0.0.3",
     packages=find_packages("src"),
     package_dir={"": "src"},
     include_package_data=True,
