@@ -29,7 +29,7 @@ with open("LICENSE") as f:
 
 setup(
     name="pyzac",
-    version="0.0.3",
+    version="0.0.4",
     packages=find_packages("src"),
     package_dir={"": "src"},
     include_package_data=True,
@@ -41,7 +41,7 @@ setup(
     # tests_require=["pytest>=2.0.0", "pytest-assume", "requests", "PyPDF2"],
     author="Dark Ligt aias FB2011Bc",
     description="The Python Actor Model using zeroMQ",
-    long_description=long_description(),
+    long_description=open("README.rst").read(),
     url="https://github.com/F2011B/pyzac",
     keywords="actor zeromq pzmq",
     classifiers=[
