@@ -20,12 +20,12 @@ if sys.version_info < (3, 3):
 
 setup(
     name="pyzac",
-    version="0.0.5",
+    version="0.0.6",
     packages=find_packages("src"),
     package_dir={"": "src"},
     include_package_data=True,
     python_requires=">= 3.3",
-    license = "https://opensource.org/licenses/Apache-2.0",
+    license = "Apache-2.0",
     # install_requires=["setuptools", "pip", "docutils", "purepng>=0.1.1"],
     # extras_require={"bitmap": ["Pillow"]},
     # setup_requires=["pytest-runner"],
