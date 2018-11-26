@@ -23,8 +23,8 @@ def long_description():
         return readme.read()
 
 
-with open("LICENSE") as f:
-    license = f.read()
+
+
 
 
 setup(
@@ -34,7 +34,7 @@ setup(
     package_dir={"": "src"},
     include_package_data=True,
     python_requires=">= 3.3",
-    license=license,
+    license = "https://opensource.org/licenses/Apache-2.0",
     # install_requires=["setuptools", "pip", "docutils", "purepng>=0.1.1"],
     # extras_require={"bitmap": ["Pillow"]},
     # setup_requires=["pytest-runner"],
