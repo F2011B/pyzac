@@ -25,7 +25,7 @@ setup(
     package_dir={"": "src"},
     include_package_data=True,
     python_requires=">= 3.3",
-    license = "Apache-2.0",
+    license = "Apache 2.0",
     # install_requires=["setuptools", "pip", "docutils", "purepng>=0.1.1"],
     # extras_require={"bitmap": ["Pillow"]},
     # setup_requires=["pytest-runner"],
