@@ -20,28 +20,28 @@ if sys.version_info < (3, 3):
 
 def long_description():
     with open(os.path.join(BASE_PATH, "README.rst")) as readme:
-        result = readme.read()
-    result += "\n\n"
-    with open(os.path.join(BASE_PATH, "CHANGES.rst")) as changes:
-        result += changes.read()
-    return result
+        return readme.read()
+
+
+with open("LICENSE") as f:
+    license = f.read()
 
 
 setup(
     name="pyzac",
-    version="0.0.1",
+    version="0.0.2",
     packages=find_packages("src"),
     package_dir={"": "src"},
     include_package_data=True,
     python_requires=">= 3.3",
+    license=license,
     # install_requires=["setuptools", "pip", "docutils", "purepng>=0.1.1"],
     # extras_require={"bitmap": ["Pillow"]},
     # setup_requires=["pytest-runner"],
     # tests_require=["pytest>=2.0.0", "pytest-assume", "requests", "PyPDF2"],
     author="Dark Ligt aias FB2011Bc",
-    author_email="darkshadow200710[at]gmx.de",
     description="The Python Actor Model using zeroMQ",
-    # long_description=long_description(),
+    long_description=long_description(),
     url="https://github.com/F2011B/pyzac",
     keywords="actor zeromq pzmq",
     classifiers=[
