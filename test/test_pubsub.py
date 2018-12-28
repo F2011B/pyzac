@@ -1,5 +1,6 @@
 from pyzac import pyzac_decorator
 from pyzac import started_processes
+from pyzac import debuglist
 from time import sleep
 
 
@@ -14,7 +15,33 @@ def test_decorators():
 
     publisher()
     subscriber()
+
+    for dinfo in debuglist:
+        print(dinfo)
+
+    for p in started_processes:
+        p.terminate()
+        p.join()
+
+
+def test_paramsubmap_decorators():
+    @pyzac_decorator(pub_addr="tcp://127.0.0.1:2000")
+    def publisher():
+        print("hello")
+        return 20
+
+    @pyzac_decorator(sub_addr={"result": "tcp://localhost:2000"})
+    def subscriber(result):
+        print("Hello")
+        assert result == 20
+
+    publisher()
     sleep(1)
+    subscriber()
+
+    for dinfo in debuglist:
+        print(dinfo)
+
     for p in started_processes:
         p.terminate()
         p.join()
@@ -35,7 +62,9 @@ def test_decorator_mesh():
         assert result == 40
 
     publisher()
+    sleep(1)
     filter()
+    sleep(1)
     end_point()
     sleep(1)
     for p in started_processes:

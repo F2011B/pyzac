@@ -5,24 +5,84 @@ import inspect
 
 started_processes = list()
 
+debuglist = list()
 
-def get_pyzac_state(func):
-    signature = inspect.signature(func)
-    for k, v in signature.parameters.items():
-        if k == "pyzac_state":
-            return v.default
+cstatekey = "pyzac_state"
+
+
+def add_debug_info(debugmessage):
+    debuglist.add(debugmessage)
 
 
 def try_get_default_state(func):
-    funcargs = inspect.getargspec(func).args
-    usestate = "pyzac_state" in funcargs
-    if usestate:
-        return True, get_pyzac_state(func)
+    signature = inspect.signature(func)
+    param_dict = {k: v for k, v in signature.parameters.items()}
+    if cstatekey in param_dict:
+        return True, param_dict[cstatekey].default
     else:
         return False, ""
 
 
-def _wrap_pyzmq(func, pub_addr="", sub_addr=""):
+def create_sub_socket(sub_addr, cntx):
+    sock_sub = cntx.socket(zmq.SUB)
+    sock_sub.connect(sub_addr)
+    sock_sub.setsockopt(zmq.SUBSCRIBE, b"")
+    return sock_sub
+
+
+def extract_func_parameters(input_sockets):
+    for param in input_sockets:
+        try:
+            input_sockets[param].recv_pyobj(flags=zmq.NOBLOCK)
+            # check for a message, this will not block
+        except zmq.Again as e:
+            pass
+
+
+def _pub_wrapper(func, pub_socket, sub_addr):
+    """
+    Pub_wrapper is used to add the zero_mq publish part to the function.
+    :param func:
+    :param pub_addr:
+    :param sub_addr:
+    :return:
+    """
+    # sock_pub.send_pyobj(func_res)
+
+    # f = functools.partial(, func, pub_addr, sub_addr)
+    return
+
+
+def _add_pub_wrapper(func, pub_addr):
+    if pub_addr == "":
+        return func
+
+    functools.partial(_pub_wrapper, func)
+
+
+def _add_sub_wrapper(func, sub_addr):
+    if sub_addr == "":
+        return func
+
+
+def _new_wrap(func, pub_addr, sub_addr):
+    # first add all sub wrappers
+    # second wrap func with pub_addr_wrapper
+    # then return the new function this is called
+    # in a while loop
+    return
+
+
+def _simple_wrap_pyzmq(func, pub_addr="", sub_addr=""):
+    def notstring(value):
+        return type(value) != str
+
+    # if notstring(pub_addr):
+    #    pub_addr = ""
+
+    # if notstring(sub_addr):
+    #    pub_addr = ""
+
     pub = not (pub_addr == "")
     sub = not (sub_addr == "")
     only_pub = pub and (not sub)
@@ -45,6 +105,8 @@ def _wrap_pyzmq(func, pub_addr="", sub_addr=""):
         func_pars = []
         if sub:
             func_pars = sock_sub.recv_pyobj()
+            print("in while ")
+            add_debug_info("sub " + str(func_pars))
 
         if usestate:
             if only_sub:
@@ -59,19 +121,67 @@ def _wrap_pyzmq(func, pub_addr="", sub_addr=""):
                 func_res = func(func_pars)
             if pub_sub:
                 func_res = func(func_pars)
+                print("pub_sub ")
             if only_pub:
                 func_res = func()
-                # print("send data " + str(func_res))
+                print("send data " + str(func_res))
+        if pub:
+            add_debug_info("pub " + str(func_res))
+            sock_pub.send_pyobj(func_res)
+
+
+def _wrap_pyzmq(func, pub_addr="", sub_addr={}):
+    """
+    :param func:
+    :param pub_addr: all generated results are distributed to that address
+    :param sub_addr: dictionary mapping parameters to sockets, key is parameter name value equal to address
+    :return:
+
+    """
+    context = zmq.Context()
+    usestate, state = try_get_default_state(func)
+
+    def notdict(value):
+        return type(value) != dict
+
+    if notdict(pub_addr) and notdict(sub_addr):
+        _simple_wrap_pyzmq(func, pub_addr, sub_addr)
+
+    func_pars = {}
+    if usestate:
+        func_pars[cstatekey] = state
+    in_sockets = {}
+    for sub in sub_addr:
+        in_sockets[sub] = create_sub_socket(sub_addr[sub], context)
+
+    pub = not (pub_addr == "")
+
+    if pub:
+        sock_pub = context.socket(zmq.PUB)
+        sock_pub.bind(pub_addr)
+
+    while True:
+        func_pars = extract_func_parameters(in_sockets)
+        func_res = None
+        if usestate:
+            func_pars[cstatekey] = state
+            func_res = func(**func_pars)
+            state = func_res
         if pub:
             sock_pub.send_pyobj(func_res)
+
 
 def pyzac_decorator(pub_addr="", sub_addr=""):
     def decorator_pyzeromq(func):
         @functools.wraps(func)
         def wrapper_process(*args, **kwargs):
+            # partial is used to generate a function with no parameters
+            # from _wrap_pyzmq and the input parameters are fixed to
+            # func pub_addr and sub_addr
             f = functools.partial(_wrap_pyzmq, func, pub_addr, sub_addr)
             new_process = Process(target=f)
             new_process.start()
+            # next line is used to track the started processes
             started_processes.append(new_process)
 
         return wrapper_process
