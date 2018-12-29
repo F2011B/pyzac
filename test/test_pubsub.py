@@ -1,7 +1,22 @@
 from pyzac import pyzac_decorator
 from pyzac import started_processes
 from pyzac import debuglist
+from pyzac import partial_sub
 from time import sleep
+
+
+def test_partial_sub():
+    class mocksocket:
+        def recv_pyobj(self, flags="notused"):
+            return 20
+
+    a = mocksocket()
+
+    def atest(myparam, myparamtwo):
+        return myparam * myparamtwo
+
+    testval = partial_sub(atest, a)(1)
+    assert testval == 20
 
 
 def test_decorators():

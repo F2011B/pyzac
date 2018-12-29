@@ -10,6 +10,11 @@ debuglist = list()
 cstatekey = "pyzac_state"
 
 
+lrsocket = {}
+
+c_def_argvalue = 0
+
+
 def add_debug_info(debugmessage):
     debuglist.add(debugmessage)
 
@@ -36,33 +41,47 @@ def extract_func_parameters(input_sockets):
             input_sockets[param].recv_pyobj(flags=zmq.NOBLOCK)
             # check for a message, this will not block
         except zmq.Again as e:
+
             pass
 
 
-def _pub_wrapper(func, pub_socket, sub_addr):
+def _try_receive_arg_from_socket(sub_socket):
+    try:
+        argvalue = sub_socket.recv_pyobj(flags=zmq.NOBLOCK)
+        # check for a message, this will not block
+    except zmq.Again as e:
+        try:
+            argvalue = lrsocket[sub_socket]
+        except:
+            pass
+        pass
+    return argvalue
+
+
+def partial_sub(func, sub_socket, def_arg_value=c_def_argvalue):
+    lrsocket[sub_socket] = def_arg_value
+
+    def newfunc(*fargs, **fkeywords):
+        argvalue = _try_receive_arg_from_socket(sub_socket)
+        return func(argvalue, *fargs, **fkeywords)
+
+    newfunc.func = func
+    newfunc.sub_socket = sub_socket
+    return newfunc
+
+
+def _pub_wrapper(func, pub_socket, param_name):
     """
     Pub_wrapper is used to add the zero_mq publish part to the function.
     :param func:
-    :param pub_addr:
-    :param sub_addr:
+    :param pub_socket: socket which is used for mapping values to parameters
+    :param param_name: name of the parameter which is mapped onto the socket
     :return:
     """
     # sock_pub.send_pyobj(func_res)
 
     # f = functools.partial(, func, pub_addr, sub_addr)
     return
-
-
-def _add_pub_wrapper(func, pub_addr):
-    if pub_addr == "":
-        return func
-
-    functools.partial(_pub_wrapper, func)
-
-
-def _add_sub_wrapper(func, sub_addr):
-    if sub_addr == "":
-        return func
 
 
 def _new_wrap(func, pub_addr, sub_addr):
