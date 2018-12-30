@@ -19,6 +19,59 @@ def test_partial_sub():
     assert testval == 20
 
 
+def test_partial_sub_addition():
+    counter = 20
+
+    class mocksocket:
+        def recv_pyobj(self, flags="notused"):
+            nonlocal counter
+            counter = counter + 1
+            return counter
+
+    a = mocksocket()
+
+    def atest(myparam, myparamtwo):
+        return myparam * myparamtwo
+
+    myfunc = partial_sub(partial_sub(atest, a), a)
+    testval = myfunc()
+    assert testval == 21 * 22
+    testval = myfunc()
+    assert testval == 23 * 24
+    testval = myfunc()
+    assert testval == 25 * 26
+
+
+def test_partial_sub_addition_keyarg():
+    """
+    This function is used to test the keyargument
+    handling in the partial_sub function.
+    """
+    startcounter = 20
+    counter = startcounter
+
+    class mocksocket:
+        def recv_pyobj(self, flags="notused"):
+            nonlocal counter
+            counter = counter + 1
+            return counter
+
+    a = mocksocket()
+
+    def atest(myparam, myparamtwo=0):
+        return myparam * myparamtwo
+
+    myfunc = partial_sub(partial_sub(atest, a), a, keyargname="myparamtwo")
+    # the myfunc has to be called multiple times to simulate multiple receive operations
+    # for the encapsulated sockets
+    testval = myfunc()
+    assert testval == (startcounter + 1) * (startcounter + 2)
+    testval = myfunc()
+    assert testval == (startcounter + 3) * (startcounter + 4)
+    testval = myfunc()
+    assert testval == (startcounter + 5) * (startcounter + 6)
+
+
 def test_decorators():
     @pyzac_decorator(pub_addr="tcp://127.0.0.1:2000")
     def publisher():
