@@ -88,6 +88,13 @@ def _pub_wrapper(func, pub_socket):
     return newfunc
 
 
+def get_pos_and_key_names(func):
+    params = inspect.signature(func).parameters
+    pos_arg_names = [k for k in params if params[k].default == inspect._empty]
+    key_arg_names = [k for k in params if params[k].default != inspect._empty]
+    return pos_arg_names, key_arg_names
+
+
 def _wrap_pyzmq(func, pub_addr="", pos_sub_addr=[], key_sub_addr={}):
     """
     :param func:
@@ -97,25 +104,58 @@ def _wrap_pyzmq(func, pub_addr="", pos_sub_addr=[], key_sub_addr={}):
 
     """
     context = zmq.Context()
-    usestate, state = try_get_default_state(func)
 
-    in_sockets = {}
-    for sub in key_sub_addr:
-        in_sockets[sub] = create_sub_socket(key_sub_addr[sub], context)
+    posnames, keynames = get_pos_and_key_names(func)
+
+    _check_mapping_of_args(key_sub_addr, keynames, pos_sub_addr, posnames)
+    in_sockets = _create_socket_mapping(context, key_sub_addr, pos_sub_addr, posnames)
 
     pub = not (pub_addr == "")
-    newfunc = func
 
-    for sub in sub_addr:
-        newfunc = partial_sub(newfunc, in_sockets[sub])
+    newfunc = _create_partial_func(func, in_sockets, key_sub_addr, posnames)
 
     if pub:
-        sock_pub = context.socket(zmq.PUB)
-        sock_pub.bind(pub_addr)
-        newfunc = _pub_wrapper(newfunc, sock_pub)
+        newfunc = _create_pub_func(context, newfunc, pub_addr)
 
     while True:
         newfunc()
+
+
+def _create_pub_func(context, newfunc, pub_addr):
+    sock_pub = context.socket(zmq.PUB)
+    sock_pub.bind(pub_addr)
+    newfunc = _pub_wrapper(newfunc, sock_pub)
+    return newfunc
+
+
+def _create_partial_func(func, in_sockets, key_sub_addr, posnames):
+    newfunc = func
+    for sub in posnames:
+        newfunc = partial_sub(newfunc, in_sockets[sub])
+    for key in key_sub_addr:
+        newfunc = partial_sub(newfunc, in_sockets[key], keyargname=key)
+    return newfunc
+
+
+def _create_socket_mapping(context, key_sub_addr, pos_sub_addr, posnames):
+    in_sockets = {}
+    counter = 0
+    for posname in posnames:
+        in_sockets[posname] = create_sub_socket(pos_sub_addr[counter], context)
+        counter += 1
+    for sub in key_sub_addr:
+        in_sockets[sub] = create_sub_socket(key_sub_addr[sub], context)
+    return in_sockets
+
+
+def _check_mapping_of_args(key_sub_addr, keynames, pos_sub_addr, posnames):
+    not_key_args_mapped = not len(key_sub_addr.keys()) == len(keynames)
+    not_pos_args_mapped = not len(posnames) == len(pos_sub_addr)
+    if not_key_args_mapped or not_pos_args_mapped:
+        if not_key_args_mapped:
+            raise Exception("key args not mapped")
+        if not_pos_args_mapped:
+            raise Exception("pos args not mapped")
 
 
 def pyzac_decorator(pub_addr="", sub_addr=""):
