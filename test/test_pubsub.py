@@ -2,6 +2,11 @@ from pyzac import pyzac_decorator
 from pyzac import started_processes
 from pyzac import debuglist
 from pyzac import partial_sub
+from pyzac import add_debug_info
+from pyzac import create_pub_func
+from pyzac import create_sub_socket
+from multiprocessing import Process
+import zmq
 from time import sleep
 
 
@@ -42,6 +47,104 @@ def test_partial_sub_addition():
     assert testval == 25 * 26
 
 
+def test_zmq():
+    recfile = open("test.txt", "w")
+
+    def pub_func():
+        context = zmq.Context()
+        #       socket = context.socket(zmq.PUB)
+        #      socket.bind("tcp://127.0.0.1:2000")
+
+        # Allow clients to connect before sending data
+        #     sleep(1)
+        #    socket.send_pyobj(20)
+
+        def atest():
+            sleep(1)
+            return 20
+
+        context = zmq.Context()
+        newfunc = create_pub_func(context, atest, "tcp://127.0.0.1:2000")
+        newfunc()
+
+    def sub_func():
+        context = zmq.Context()
+        socket = context.socket(zmq.SUB)
+        # We can connect to several endpoints if we desire, and receive from all.
+        socket.connect("tcp://127.0.0.1:2000")
+
+        # We must declare the socket as of type SUBSCRIBER, and pass a prefix filter.
+        # Here, the filter is the empty string, wich means we receive all messages.
+        # We may subscribe to several filters, thus receiving from all.
+        socket.setsockopt(zmq.SUBSCRIBE, b"")
+
+        message = socket.recv_pyobj()
+        print(message)
+
+    print("start_new_func")
+    pub_process = Process(target=pub_func)
+    pub_process.start()
+    print("start_sub_func")
+    rec_process = Process(target=sub_func)
+    rec_process.start()
+    sleep(2)
+    pub_process.terminate()
+    pub_process.join()
+    rec_process.terminate()
+    rec_process.join()
+
+
+def test_partial_zmq():
+
+    sendfile = open("sendtest.txt", "w")
+
+    def atest():
+        sendfile.write(str(20))
+        return 20
+
+    recfile = open("test.txt", "w")
+    context = zmq.Context()
+
+    newfunc = create_pub_func(context, atest, "tcp://127.0.0.1:5000")
+
+    assert 20 == newfunc()
+
+    def run_newfunc():
+        while True:
+            newfunc()
+
+    subcontext = zmq.Context()
+    sub_socket = create_sub_socket("tcp://127.0.0.1:5000", subcontext)
+
+    reclist = list()
+
+    def run_receive():
+        while True:
+            testobj = sub_socket.recv_pyobj()
+            reclist.append(testobj)
+            recfile.write(testobj)
+            # print(testobj)
+
+    run_receive.sub_socket = sub_socket
+    run_receive.reclist = reclist
+
+    pub_process = Process(target=run_newfunc)
+    pub_process.start()
+    sleep(1)
+    rec_process = Process(target=run_receive)
+    rec_process.start()
+    sleep(1)
+
+    pub_process.terminate()
+    pub_process.join()
+    rec_process.terminate()
+    rec_process.join()
+    print(reclist)
+
+
+# assert len(reclist) > 0
+
+
 def test_partial_sub_addition_keyarg():
     """
     This function is used to test the keyargument
@@ -75,15 +178,19 @@ def test_partial_sub_addition_keyarg():
 def test_decorators():
     @pyzac_decorator(pub_addr="tcp://127.0.0.1:2000")
     def publisher():
+        add_debug_info("in publisher")
         return 20
 
-    @pyzac_decorator(sub_addr="tcp://localhost:2000")
+    @pyzac_decorator(pos_sub_addr=["tcp://localhost:2000"])
     def subscriber(result):
+        add_debug_info("in subscriber")
         assert result == 20
 
     publisher()
     subscriber()
+    sleep(1)
 
+    assert len(debuglist) != 0
     for dinfo in debuglist:
         print(dinfo)
 

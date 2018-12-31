@@ -17,13 +17,14 @@ c_def_blank = ""
 
 
 def add_debug_info(debugmessage):
-    debuglist.add(debugmessage)
+    debuglist.append(debugmessage)
 
 
 def create_sub_socket(sub_addr, cntx):
     sock_sub = cntx.socket(zmq.SUB)
     sock_sub.connect(sub_addr)
-    sock_sub.setsockopt(zmq.SUBSCRIBE, b"")
+    sock_sub.setsockopt_string(zmq.SUBSCRIBE, "")
+    # sock_sub.setsockopt(zmq.SUBSCRIBE, b"")
     return sock_sub
 
 
@@ -54,6 +55,7 @@ def partial_sub(func, sub_socket, keyargname=c_def_blank, def_arg_value=c_def_ar
 
     def newfunc(*fargs, **fkeywords):
         argvalue = _try_receive_arg_from_socket(sub_socket)
+        add_debug_info(argvalue)
         if keyargname != c_def_blank:
             newkeywords = {keyargname: argvalue}
             newkeywords.update(fkeywords)
@@ -75,13 +77,18 @@ def _pub_wrapper(func, pub_socket):
     :return:
     """
 
-    def newfunc(*fargs, **fkeywords):
+    def newfunc():
         try:
             func_res = func()
+            print(func_res)
+            print(pub_socket)
+            # print(pub_socket.get(zmq.ZMQ_LAST_ENDPOINT))
             pub_socket.send_pyobj(func_res)
         except:
+            print("exception")
+            Exception("Cannot send pub")
             pass
-        return
+        return func_res
 
     newfunc.func = func
     newfunc.pub_socket = pub_socket
@@ -115,13 +122,13 @@ def _wrap_pyzmq(func, pub_addr="", pos_sub_addr=[], key_sub_addr={}):
     newfunc = _create_partial_func(func, in_sockets, key_sub_addr, posnames)
 
     if pub:
-        newfunc = _create_pub_func(context, newfunc, pub_addr)
+        newfunc = create_pub_func(context, newfunc, pub_addr)
 
     while True:
         newfunc()
 
 
-def _create_pub_func(context, newfunc, pub_addr):
+def create_pub_func(context, newfunc, pub_addr):
     sock_pub = context.socket(zmq.PUB)
     sock_pub.bind(pub_addr)
     newfunc = _pub_wrapper(newfunc, sock_pub)
@@ -158,14 +165,16 @@ def _check_mapping_of_args(key_sub_addr, keynames, pos_sub_addr, posnames):
             raise Exception("pos args not mapped")
 
 
-def pyzac_decorator(pub_addr="", sub_addr=""):
+def pyzac_decorator(pub_addr="", pos_sub_addr=[], key_sub_addr={}):
     def decorator_pyzeromq(func):
         @functools.wraps(func)
         def wrapper_process(*args, **kwargs):
             # partial is used to generate a function with no parameters
             # from _wrap_pyzmq and the input parameters are fixed to
             # func pub_addr and sub_addr
-            f = functools.partial(_wrap_pyzmq, func, pub_addr, sub_addr)
+            f = functools.partial(
+                _wrap_pyzmq, func, pub_addr, pos_sub_addr, key_sub_addr
+            )
             new_process = Process(target=f)
             new_process.start()
             # next line is used to track the started processes
