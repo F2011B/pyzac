@@ -94,39 +94,23 @@ def test_zmq():
     rec_process.join()
 
 
-def test_partial_zmq():
-
-    sendfile = open("sendtest.txt", "w")
-
+def test_partial_pub_zmq():
     def atest():
-        sendfile.write(str(20))
         return 20
 
-    recfile = open("test.txt", "w")
-    context = zmq.Context()
-
-    newfunc = create_pub_func(context, atest, "tcp://127.0.0.1:5000")
-
-    assert 20 == newfunc()
-
     def run_newfunc():
+        context = zmq.Context()
+        newfunc = create_pub_func(context, atest, "tcp://127.0.0.1:5000")
         while True:
-            newfunc()
-
-    subcontext = zmq.Context()
-    sub_socket = create_sub_socket("tcp://127.0.0.1:5000", subcontext)
-
-    reclist = list()
+            assert 20 == newfunc()
 
     def run_receive():
+        subcontext = zmq.Context()
+        sub_socket = create_sub_socket("tcp://127.0.0.1:5000", subcontext)
         while True:
             testobj = sub_socket.recv_pyobj()
-            reclist.append(testobj)
-            recfile.write(testobj)
-            # print(testobj)
-
-    run_receive.sub_socket = sub_socket
-    run_receive.reclist = reclist
+            print(testobj)
+            assert testobj == 20
 
     pub_process = Process(target=run_newfunc)
     pub_process.start()
@@ -134,12 +118,43 @@ def test_partial_zmq():
     rec_process = Process(target=run_receive)
     rec_process.start()
     sleep(1)
-
     pub_process.terminate()
     pub_process.join()
     rec_process.terminate()
     rec_process.join()
-    print(reclist)
+
+
+def test_partial_pub_sub_zmq():
+    def atest():
+        return 20
+
+    def get_test(avalue):
+        assert (avalue == 20) or (avalue == 0)
+
+    def run_newfunc():
+        context = zmq.Context()
+        newfunc = create_pub_func(context, atest, "tcp://127.0.0.1:5000")
+        while True:
+            assert 20 == newfunc()
+
+    def run_receive():
+        subcontext = zmq.Context()
+        sub_socket = create_sub_socket("tcp://127.0.0.1:5000", subcontext)
+
+        recfunc = partial_sub(get_test, sub_socket)
+        while True:
+            recfunc()
+
+    pub_process = Process(target=run_newfunc)
+    pub_process.start()
+    sleep(1)
+    rec_process = Process(target=run_receive)
+    rec_process.start()
+    sleep(1)
+    pub_process.terminate()
+    pub_process.join()
+    rec_process.terminate()
+    rec_process.join()
 
 
 # assert len(reclist) > 0

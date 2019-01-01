@@ -80,8 +80,6 @@ def _pub_wrapper(func, pub_socket):
     def newfunc():
         try:
             func_res = func()
-            print(func_res)
-            print(pub_socket)
             # print(pub_socket.get(zmq.ZMQ_LAST_ENDPOINT))
             pub_socket.send_pyobj(func_res)
         except:
