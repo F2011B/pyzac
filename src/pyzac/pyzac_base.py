@@ -2,10 +2,12 @@ import zmq
 from multiprocessing import Process
 import functools
 import inspect
+import sys
 
 started_processes = list()
 
 debuglist = list()
+assertlist = list()
 
 cstatekey = "pyzac_state"
 
@@ -14,6 +16,13 @@ lrsocket = {}
 
 c_def_argvalue = 0
 c_def_blank = ""
+
+
+def excepthook(*args):
+    assertlist.append(args)
+
+
+sys.excepthook = excepthook
 
 
 def add_debug_info(debugmessage):
@@ -47,13 +56,14 @@ def _try_receive_arg_from_socket(sub_socket):
         except:
             pass
         pass
+    lrsocket[sub_socket] = argvalue
     return argvalue
 
 
 def partial_sub(func, sub_socket, keyargname=c_def_blank, def_arg_value=c_def_argvalue):
     lrsocket[sub_socket] = def_arg_value
 
-    def newfunc(*fargs, **fkeywords):
+    def resultfunc(*fargs, **fkeywords):
         argvalue = _try_receive_arg_from_socket(sub_socket)
         add_debug_info(argvalue)
         if keyargname != c_def_blank:
@@ -63,9 +73,9 @@ def partial_sub(func, sub_socket, keyargname=c_def_blank, def_arg_value=c_def_ar
         else:
             return func(argvalue, *fargs, **fkeywords)
 
-    newfunc.func = func
-    newfunc.sub_socket = sub_socket
-    return newfunc
+    resultfunc.func = func
+    resultfunc.sub_socket = sub_socket
+    return resultfunc
 
 
 def _pub_wrapper(func, pub_socket):

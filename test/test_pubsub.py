@@ -1,5 +1,6 @@
 from pyzac import pyzac_decorator
 from pyzac import started_processes
+from pyzac import assertlist
 from pyzac import debuglist
 from pyzac import partial_sub
 from pyzac import add_debug_info
@@ -191,7 +192,7 @@ def test_partial_sub_addition_keyarg():
 
 
 def test_decorators():
-    @pyzac_decorator(pub_addr="tcp://127.0.0.1:2000")
+    @pyzac_decorator(pub_addr="tcp://localhost:2000")
     def publisher():
         add_debug_info("in publisher")
         return 20
@@ -199,15 +200,21 @@ def test_decorators():
     @pyzac_decorator(pos_sub_addr=["tcp://localhost:2000"])
     def subscriber(result):
         add_debug_info("in subscriber")
-        assert result == 20
+        print(result)
+        # assert result == 20
 
     publisher()
+    sleep(1)
     subscriber()
     sleep(1)
 
-    assert len(debuglist) != 0
-    for dinfo in debuglist:
-        print(dinfo)
+    # assert len(debuglist) != 0
+    # for dinfo in debuglist:
+    #     print(dinfo)
+
+    # assert len(assertlist) != 0
+    # for dinfo in assertlist:
+    #    print(dinfo)
 
     for p in started_processes:
         p.terminate()
@@ -217,17 +224,21 @@ def test_decorators():
 def test_paramsubmap_decorators():
     @pyzac_decorator(pub_addr="tcp://127.0.0.1:2000")
     def publisher():
-        print("hello")
+        # print("hello")
         return 20
 
-    @pyzac_decorator(sub_addr={"result": "tcp://localhost:2000"})
+    @pyzac_decorator(pos_sub_addr=["tcp://localhost:2000"])
     def subscriber(result):
-        print("Hello")
+        print(result)
         assert result == 20
 
     publisher()
     sleep(1)
     subscriber()
+
+    assert len(assertlist) != 0
+    for dinfo in assertlist:
+        print(dinfo)
 
     for dinfo in debuglist:
         print(dinfo)
@@ -242,12 +253,14 @@ def test_decorator_mesh():
     def publisher():
         return 20
 
-    @pyzac_decorator(sub_addr="tcp://localhost:2000", pub_addr="tcp://127.0.0.1:2001")
+    @pyzac_decorator(
+        pos_sub_addr="tcp://localhost:2000", pub_addr="tcp://127.0.0.1:2001"
+    )
     def filter(result):
-        assert result == 20
+        assert result == 30
         return 40
 
-    @pyzac_decorator(sub_addr="tcp://localhost:2001")
+    @pyzac_decorator(pos_sub_addr="tcp://localhost:2001")
     def end_point(result):
         assert result == 40
 
@@ -257,6 +270,11 @@ def test_decorator_mesh():
     sleep(1)
     end_point()
     sleep(1)
+
+    assert len(assertlist) != 0
+    for dinfo in assertlist:
+        print(dinfo)
+
     for p in started_processes:
         p.terminate()
         p.join()
@@ -270,7 +288,7 @@ def test_state():
     def publisher():
         return std_pub_val
 
-    @pyzac_decorator(sub_addr="tcp://localhost:2000")
+    @pyzac_decorator(pos_sub_addr="tcp://localhost:2000")
     def subscriber(result, pyzac_state=0):
         nonlocal count
         if count == 1:
@@ -279,6 +297,7 @@ def test_state():
         if count == 2:
             assert pyzac_state == 2 * std_pub_val
         count = count + 1
+        print(count)
         return result + pyzac_state
 
     publisher()
