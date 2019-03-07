@@ -12,5 +12,9 @@ def subscriber_two(result):
     add_debug_info("in subscriber")
     print(result)
 
-subscriber()
-subscriber_two()
+
+try:
+    subscriber()
+    subscriber_two()
+except:
+    print(debuglist)
