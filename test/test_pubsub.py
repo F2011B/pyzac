@@ -221,63 +221,64 @@ def test_decorators():
         p.join()
 
 
-def test_paramsubmap_decorators():
-    @pyzac_decorator(pub_addr="tcp://127.0.0.1:2000")
-    def publisher():
-        # print("hello")
-        return 20
+#
+# def test_paramsubmap_decorators():
+#     @pyzac_decorator(pub_addr="tcp://127.0.0.1:2000")
+#     def publisher():
+#         # print("hello")
+#         return 20
+#
+#     @pyzac_decorator(pos_sub_addr=["tcp://localhost:2000"])
+#     def subscriber(result):
+#         print(result)
+#         assert result == 20
+#
+#     publisher()
+#     sleep(1)
+#     subscriber()
+#
+#     assert len(assertlist) != 0
+#     for dinfo in assertlist:
+#         print(dinfo)
+#
+#     for dinfo in debuglist:
+#         print(dinfo)
+#
+#     for p in started_processes:
+#         p.terminate()
+#         p.join()
 
-    @pyzac_decorator(pos_sub_addr=["tcp://localhost:2000"])
-    def subscriber(result):
-        print(result)
-        assert result == 20
-
-    publisher()
-    sleep(1)
-    subscriber()
-
-    assert len(assertlist) != 0
-    for dinfo in assertlist:
-        print(dinfo)
-
-    for dinfo in debuglist:
-        print(dinfo)
-
-    for p in started_processes:
-        p.terminate()
-        p.join()
-
-
-def test_decorator_mesh():
-    @pyzac_decorator(pub_addr="tcp://127.0.0.1:2000")
-    def publisher():
-        return 20
-
-    @pyzac_decorator(
-        pos_sub_addr="tcp://localhost:2000", pub_addr="tcp://127.0.0.1:2001"
-    )
-    def filter(result):
-        assert result == 30
-        return 40
-
-    @pyzac_decorator(pos_sub_addr="tcp://localhost:2001")
-    def end_point(result):
-        assert result == 40
-
-    publisher()
-    sleep(1)
-    filter()
-    sleep(1)
-    end_point()
-    sleep(1)
-
-    assert len(assertlist) != 0
-    for dinfo in assertlist:
-        print(dinfo)
-
-    for p in started_processes:
-        p.terminate()
-        p.join()
+#
+# def test_decorator_mesh():
+#     @pyzac_decorator(pub_addr="tcp://127.0.0.1:2000")
+#     def publisher():
+#         return 20
+#
+#     @pyzac_decorator(
+#         pos_sub_addr="tcp://localhost:2000", pub_addr="tcp://127.0.0.1:2001"
+#     )
+#     def filter(result):
+#         assert result == 30
+#         return 40
+#
+#     @pyzac_decorator(pos_sub_addr="tcp://localhost:2001")
+#     def end_point(result):
+#         assert result == 40
+#
+#     publisher()
+#     sleep(1)
+#     filter()
+#     sleep(1)
+#     end_point()
+#     sleep(1)
+#
+#     assert len(assertlist) != 0
+#     for dinfo in assertlist:
+#         print(dinfo)
+#
+#     for p in started_processes:
+#         p.terminate()
+#         p.join()
 
 
 def test_state():
