@@ -13,6 +13,8 @@ install:
 - python setup.py bdist_wheel
 script:
 - "$TIMEOUT tox -v $DIST"
+- make html
+
 deploy:
   provider: pypi
   user: DarkLight
