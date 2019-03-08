@@ -5,7 +5,7 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
 ## Basic Concept
- pyzac uses zeromq to create a mesho of interconnected actors.
+ pyzac uses zeromq to create a mesh of interconnected actors.
  Those actors are created by decorating a function with a pyzac decorator.
  There exist three cases of actors:
  1. The function does not contain any input parameters. Therefore the 
