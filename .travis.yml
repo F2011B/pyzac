@@ -13,7 +13,7 @@ install:
 - python setup.py bdist_wheel
 script:
 - "$TIMEOUT tox -v $DIST"
-- make html
+- cd docs; make html linkcheck
 
 deploy:
   provider: pypi
