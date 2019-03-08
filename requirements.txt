@@ -3,3 +3,5 @@ tox-travis
 pyzmq
 pytest
 wheel
+sphinx
+sphinx_rtd_theme
