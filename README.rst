@@ -20,6 +20,8 @@ This decorator is used to license to another actor or in case the
 function does not have any parameters it is used to publish the function
 results. The package should be placed at pypi in the near future.
 
+.. |Doc status| image:: https://readthedocs.org/projects/pyzac/badge/?version=latest
+   :target: https://pyzac.readthedocs.io/en/latest/?badge=latest
 .. |Build Status| image:: https://travis-ci.org/F2011B/pyzac.svg?branch=master
    :target: https://travis-ci.org/F2011B/pyzac
 .. |Codacy Badge| image:: https://api.codacy.com/project/badge/Grade/313cc391a41040cab9d8119fbbcc483a
