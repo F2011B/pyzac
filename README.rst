@@ -1,7 +1,7 @@
 pyzac python-zero-mq-actor
 ==========================
 
-|Build Status| |Codacy Badge| |Code style: black|
+|Doc status| |Build Status| |Codacy Badge| |Code style: black|
 
 Basic Concept
 -------------
