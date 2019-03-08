@@ -1,4 +1,5 @@
 # pyzac python-zero-mq-actor
+[![Documentation Status](https://readthedocs.org/projects/pyzac/badge/?version=latest)](https://pyzac.readthedocs.io/en/latest/?badge=latest)
 [![Build Status](https://travis-ci.org/F2011B/pyzac.svg?branch=master)](https://travis-ci.org/F2011B/pyzac)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/313cc391a41040cab9d8119fbbcc483a)](https://app.codacy.com/app/F2011B/pyzac?utm_source=github.com&utm_medium=referral&utm_content=F2011B/pyzac&utm_campaign=Badge_Grade_Dashboard)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
