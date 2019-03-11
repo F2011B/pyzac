@@ -174,7 +174,7 @@ def _create_socket_mapping(context, key_sub_addr):  # , pos_sub_addr, posnames):
     return in_sockets
 
 
-def _check_mapping_of_args(key_sub_addr, keynames, pos_sub_addr, posnames, state={}):
+def _check_mapping_of_args(key_sub_addr, keynames, pos_sub_addr, posnames, state=None):
     """
     :param key_sub_addr: dictionary key= name of keyword argument value= address of zmq publisher
     :param keynames: list of keyword arguments
@@ -209,7 +209,19 @@ def _check_mapping_of_args(key_sub_addr, keynames, pos_sub_addr, posnames, state
             raise Exception("pos args not mapped")
 
 
-def pyzac_decorator(pub_addr="", pos_sub_addr=[], key_sub_addr={}, pyzac_state={}):
+def pyzac_decorator(pub_addr="", pos_sub_addr=[], key_sub_addr=None, pyzac_state=None):
+    key_addr = key_sub_addr
+    sub_addr = pos_sub_addr
+    state = pyzac_state
+    if key_sub_addr == None:
+        key_addr = {}
+
+    if pos_sub_addr == None:
+        sub_addr = []
+
+    if pyzac_state == None:
+        state = {}
+
     def decorator_pyzeromq(func):
         @functools.wraps(func)
         def wrapper_process(*args, **kwargs):
@@ -217,7 +229,7 @@ def pyzac_decorator(pub_addr="", pos_sub_addr=[], key_sub_addr={}, pyzac_state={
             # from _wrap_pyzmq and the input parameters are fixed to
             # func pub_addr and sub_addr
             f = functools.partial(
-                _wrap_pyzmq, func, pub_addr, pos_sub_addr, key_sub_addr, pyzac_state
+                _wrap_pyzmq, func, pub_addr, sub_addr, key_addr, state
             )
             new_process = Process(target=f)
             new_process.start()
