@@ -14,7 +14,7 @@ cstatekey = "pyzac_state"
 
 lrsocket = {}
 
-c_def_argvalue = 0
+c_def_argvalue = 1
 c_def_blank = ""
 
 
@@ -110,7 +110,7 @@ def get_pos_and_key_names(func):
     return pos_arg_names, key_arg_names
 
 
-def _wrap_pyzmq(func, pub_addr="", pos_sub_addr=[], key_sub_addr={}):
+def _wrap_pyzmq(func, pub_addr="", pos_sub_addr=[], key_sub_addr={}, pyzac_state={}):
     """
     :param func:
     :param pub_addr: all generated results are distributed to that address
@@ -123,7 +123,7 @@ def _wrap_pyzmq(func, pub_addr="", pos_sub_addr=[], key_sub_addr={}):
     posnames, keynames = get_pos_and_key_names(func)
 
     new_key_sub_addr = _check_mapping_of_args(
-        key_sub_addr, keynames, pos_sub_addr, posnames
+        key_sub_addr, keynames, pos_sub_addr, posnames, pyzac_state
     )
     in_sockets = _create_socket_mapping(context, new_key_sub_addr)
     # pos_sub_addr, posnames)
@@ -135,8 +135,16 @@ def _wrap_pyzmq(func, pub_addr="", pos_sub_addr=[], key_sub_addr={}):
     if pub:
         newfunc = create_pub_func(context, newfunc, pub_addr)
 
-    while True:
-        newfunc()
+    if len(pyzac_state.keys()) == 0:
+        while True:
+            newfunc()
+    else:
+        while True:
+            value = newfunc(**pyzac_state)
+            if type(value) != list:
+                value = [value]
+
+            pyzac_state = dict(zip(pyzac_state.keys(), value))
 
 
 def create_pub_func(context, newfunc, pub_addr):
@@ -166,7 +174,7 @@ def _create_socket_mapping(context, key_sub_addr):  # , pos_sub_addr, posnames):
     return in_sockets
 
 
-def _check_mapping_of_args(key_sub_addr, keynames, pos_sub_addr, posnames):
+def _check_mapping_of_args(key_sub_addr, keynames, pos_sub_addr, posnames, state={}):
     """
     :param key_sub_addr: dictionary key= name of keyword argument value= address of zmq publisher
     :param keynames: list of keyword arguments
@@ -174,16 +182,25 @@ def _check_mapping_of_args(key_sub_addr, keynames, pos_sub_addr, posnames):
     :param posnames: positional arguments
     :return: returns new composed dictionary containing positional and keyword arguments mappings
     """
+    num_state = 0
+    if type(state) == dict:
+        num_state = len(state.keys())
 
     key_length = len(keynames)
     pos_length = len(posnames)
-    addr_length = len(pos_sub_addr) + len(key_sub_addr.keys())
+    addr_length = len(pos_sub_addr) + len(key_sub_addr.keys()) + num_state
 
     not_key_args_mapped = not len(key_sub_addr.keys()) == key_length
     not_pos_args_mapped = not len(posnames) == pos_length
     map_length_correct = addr_length == (key_length + pos_length)
+
+    result = dict(**key_sub_addr, **dict(zip(posnames, pos_sub_addr)))
+    # Delete state keys from target key dict
+    for k in state.keys():
+        result.pop(k, None)
+
     if map_length_correct:
-        return dict(**key_sub_addr, **dict(zip(posnames, pos_sub_addr)))
+        return result
 
     if not_key_args_mapped or not_pos_args_mapped:
         if not_key_args_mapped:
@@ -192,7 +209,7 @@ def _check_mapping_of_args(key_sub_addr, keynames, pos_sub_addr, posnames):
             raise Exception("pos args not mapped")
 
 
-def pyzac_decorator(pub_addr="", pos_sub_addr=[], key_sub_addr={}):
+def pyzac_decorator(pub_addr="", pos_sub_addr=[], key_sub_addr={}, pyzac_state={}):
     def decorator_pyzeromq(func):
         @functools.wraps(func)
         def wrapper_process(*args, **kwargs):
@@ -200,7 +217,7 @@ def pyzac_decorator(pub_addr="", pos_sub_addr=[], key_sub_addr={}):
             # from _wrap_pyzmq and the input parameters are fixed to
             # func pub_addr and sub_addr
             f = functools.partial(
-                _wrap_pyzmq, func, pub_addr, pos_sub_addr, key_sub_addr
+                _wrap_pyzmq, func, pub_addr, pos_sub_addr, key_sub_addr, pyzac_state
             )
             new_process = Process(target=f)
             new_process.start()
