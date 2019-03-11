@@ -141,7 +141,7 @@ def _wrap_pyzmq(func, pub_addr="", pos_sub_addr=[], key_sub_addr={}, pyzac_state
     else:
         while True:
             value = newfunc(**pyzac_state)
-            if type(value) != list:
+            if not isinstance(value, list):
                 value = [value]
 
             pyzac_state = dict(zip(pyzac_state.keys(), value))
@@ -183,7 +183,7 @@ def _check_mapping_of_args(key_sub_addr, keynames, pos_sub_addr, posnames, state
     :return: returns new composed dictionary containing positional and keyword arguments mappings
     """
     num_state = 0
-    if type(state) == dict:
+    if isinstance(state, dict):
         num_state = len(state.keys())
 
     key_length = len(keynames)
