@@ -209,7 +209,9 @@ def _check_mapping_of_args(key_sub_addr, keynames, pos_sub_addr, posnames, state
             raise Exception("pos args not mapped")
 
 
-def pyzac_decorator(pub_addr="", pos_sub_addr=[], key_sub_addr=None, pyzac_state=None):
+def pyzac_decorator(
+    pub_addr="", pos_sub_addr=None, key_sub_addr=None, pyzac_state=None
+):
     key_addr = key_sub_addr
     sub_addr = pos_sub_addr
     state = pyzac_state
