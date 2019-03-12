@@ -87,11 +87,13 @@ def _pub_wrapper(func, pub_socket):
     :return:
     """
 
-    def newfunc():
+    def newfunc(*fargs, **fkeywords):
+        func_res = None
         try:
-            func_res = func()
+            func_res = func(*fargs, **fkeywords)
             # print(pub_socket.get(zmq.ZMQ_LAST_ENDPOINT))
-            pub_socket.send_pyobj(func_res)
+            if func_res != None:
+                pub_socket.send_pyobj(func_res)
         except:
             print("exception")
             Exception("Cannot send pub")
@@ -140,11 +142,11 @@ def _wrap_pyzmq(func, pub_addr="", pos_sub_addr=[], key_sub_addr={}, pyzac_state
             newfunc()
     else:
         while True:
-            value = newfunc(**pyzac_state)
+            value = newfunc(pyzac_state=pyzac_state)
             if not isinstance(value, list):
                 value = [value]
 
-            pyzac_state = dict(zip(pyzac_state.keys(), value))
+            # pyzac_state = dict(zip(pyzac_state.keys(), value))
 
 
 def create_pub_func(context, newfunc, pub_addr):
